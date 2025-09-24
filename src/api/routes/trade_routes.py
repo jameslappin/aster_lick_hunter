@@ -38,8 +38,11 @@ def get_trades():
         params.append(status)
 
     # Build final query with LEFT JOIN to income_history for PNL data
-    # Now we try to match on exchange_trade_id first, then fallback to order_id
-    where_clause = ' AND '.join(conditions) if conditions else '1=1'
+    # Filter out failed trades (status FAILED or ERROR) so only successful trades are shown
+    if where_clause := ' AND '.join(conditions) if conditions else '1=1':
+        where_clause += " AND t.status NOT IN ('FAILED', 'ERROR')"
+    else:
+        where_clause = "t.status NOT IN ('FAILED', 'ERROR')"
     query = f'''
         SELECT
             t.*,

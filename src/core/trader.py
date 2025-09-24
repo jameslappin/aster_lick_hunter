@@ -855,10 +855,8 @@ async def place_order(symbol, side, qty, last_price, order_type='LIMIT', positio
 
             return order_id
         else:
+            # Only log failed trades, do not insert into trades table
             log.trade_failed(symbol, f"HTTP {response.status_code}: {response.text}")
-            insert_trade(conn, symbol, 'failed', side, qty, entry_price, 'FAILED',
-                       response.text, 'LIMIT', None, filled_qty=0, avg_price=entry_price, tranche_id=tranche_id)
-
             # Remove pending exposure on failure
             if position_manager:
                 position_manager.remove_pending_exposure(symbol, qty * entry_price,
@@ -866,10 +864,8 @@ async def place_order(symbol, side, qty, last_price, order_type='LIMIT', positio
             return None
 
     except Exception as e:
+        # Only log failed trades, do not insert into trades table
         log.trade_failed(symbol, str(e))
-        insert_trade(conn, symbol, 'error', side, qty, entry_price, 'ERROR',
-                   str(e), 'LIMIT', None, filled_qty=0, avg_price=entry_price, tranche_id=tranche_id)
-
         # Remove pending exposure on error
         if position_manager:
             position_manager.remove_pending_exposure(symbol, qty * entry_price,
