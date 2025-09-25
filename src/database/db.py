@@ -662,3 +662,10 @@ def get_tranche_by_order(conn, order_id):
         WHERE tp_order_id = ? OR sl_order_id = ?
     ''', (order_id, order_id))
     return cursor.fetchone()
+
+def get_db_connection():
+    # Use WAL mode and allow cross-thread access for Docker/Gunicorn
+    conn = sqlite3.connect(config.DB_PATH, timeout=30, check_same_thread=False)
+    conn.row_factory = sqlite3.Row
+    conn.execute('PRAGMA journal_mode=WAL;')
+    return conn

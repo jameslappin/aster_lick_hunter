@@ -1,0 +1,47 @@
+services:
+  aster:
+    build:
+      context: .
+      args:
+        PUID: 1001
+        PGID: 1001
+    image: aster_lick_hunter:latest
+    container_name: aster_lick_hunter
+    hostname: aster
+    user: "1001:1001"
+    environment:
+      - TZ=Australia/Brisbane
+      # Optional gunicorn tuning:
+      - GUNICORN_WORKERS=1
+      - GUNICORN_THREADS=1
+      # - GUNICORN_TIMEOUT=120
+      - PYTHONPATH=/app
+    networks: [saltbox]
+    volumes:
+      - /opt/aster:/app:rw           # <-- everything (code, settings.json, db, logs, deps) is here
+      # - /etc/localtime:/etc/localtime:ro   # optional
+    # No ports; Traefik handles ingress
+    labels:
+      com.github.saltbox.saltbox_managed: true
+      traefik.enable: true
+
+      # HTTP -> HTTPS
+      traefik.http.routers.aster-http.entrypoints: web
+      traefik.http.routers.aster-http.middlewares: globalHeaders@file,redirect-to-https@docker,robotHeaders@file,authelia@docker
+      traefik.http.routers.aster-http.rule: Host(`aster.woah.space`)
+      traefik.http.routers.aster-http.service: aster
+
+      # HTTPS
+      traefik.http.routers.aster.entrypoints: websecure
+      traefik.http.routers.aster.middlewares: globalHeaders@file,secureHeaders@file,robotHeaders@file,authelia@docker
+      traefik.http.routers.aster.rule: Host(`aster.woah.space`)
+      traefik.http.routers.aster.service: aster
+      traefik.http.routers.aster.tls.certresolver: zerosslhttp
+      traefik.http.routers.aster.tls.options: securetls@file
+
+      # Service port inside container
+      traefik.http.services.aster.loadbalancer.server.port: "5000"
+
+networks:
+  saltbox:
+    external: true

@@ -955,12 +955,8 @@ class OrderCleanup:
                                 order_id = str(result.get('orderId'))
                                 order_type = order['type']
                                 log.info(f"Successfully placed recovery {order_type} order {order_id} for {symbol}")
-                                repaired_count += 1
-
-                                # Track the order ID for relationship storage
-                                # Recovery orders are LIMIT orders used as TP orders
-                                # Based on logs, these are always TP orders
-                                tp_order_id = order_id
+                                # Add this:
+                                log.info(f"Order details: {result}")
                             else:
                                 log.error(f"Failed to place recovery order: {resp.text}")
 
