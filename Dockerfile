@@ -32,7 +32,7 @@ RUN printf '%s\n' \
   'if [ ! -d "$APP_DIR" ]; then' \
   '  echo "[fatal] $APP_DIR not mounted from host" >&2; exit 1' \
   'fi' \
-  'mkdir -p "$DEPS_DIR" "$APP_DIR/logs"' \
+  'mkdir -p "$DEPS_DIR" "$APP_DIR/logs" "$APP_DIR/data"' \
   '' \
   '# Install/refresh deps if requirements.txt present' \
   'if [ -f "$REQS_FILE" ]; then' \
@@ -47,6 +47,7 @@ RUN printf '%s\n' \
   'fi' \
   '' \
   'export PYTHONPATH="$APP_DIR:$DEPS_DIR:$PYTHONPATH"' \
+  'export PATH="$DEPS_DIR/bin:$PATH"' \
   '' \
   'cd "$APP_DIR"' \
   'echo "[init] running DB migration..."' \
@@ -61,6 +62,9 @@ RUN printf '%s\n' \
  && chmod +x /usr/local/bin/start-hostapp.sh
 
 USER appuser
+
+# Ensure data directory exists before DB init
+RUN mkdir -p "$APP_DIR/data"
 
 EXPOSE 5000
 ENTRYPOINT ["/usr/local/bin/start-hostapp.sh"]
