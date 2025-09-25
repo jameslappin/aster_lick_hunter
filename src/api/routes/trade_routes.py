@@ -13,8 +13,9 @@ def get_trades():
     """Get trade history with PNL data."""
     limit = request.args.get('limit', 100, type=int)
     symbol = request.args.get('symbol', None)
-    hours = request.args.get('hours', 24, type=int)
+    hours = request.args.get('hours', 168, type=int)  # Default to 7 days
     status = request.args.get('status', None)
+    include_all = request.args.get('include_all', False, type=bool)
 
     conn = get_db_connection()
 
@@ -36,6 +37,10 @@ def get_trades():
     if status:
         conditions.append('t.status = ?')
         params.append(status)
+    elif not include_all:
+        # By default, only show trades with PNL data (FILLED, SUCCESS, or CLOSED status)
+        # unless include_all is True
+        conditions.append("(t.status = 'FILLED' OR t.status = 'SUCCESS' OR t.status = 'CLOSED')")
 
     # Build final query with LEFT JOIN to income_history for PNL data
     # Filter out failed trades (status FAILED or ERROR) so only successful trades are shown
